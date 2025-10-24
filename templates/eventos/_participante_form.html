@@ -1,0 +1,16 @@
+{# templates/eventos/_participante_form.html #}
+<div class="grid grid-2" style="border:1px solid #e5e7eb;border-radius:.6rem;padding:1rem;margin-bottom:.75rem">
+  <div class="field">
+    <label for="{{ pform.nombre.id_for_label }}">Nombre del participante *</label>
+    {{ pform.nombre }}
+    {{ pform.nombre.errors }}
+  </div>
+
+  <div class="field">
+    <label for="{{ pform.email.id_for_label }}">Correo electrónico *</label>
+    {{ pform.email }}
+    {{ pform.email.errors }}
+  </div>
+
+  {{ pform.non_field_errors }}
+</div>

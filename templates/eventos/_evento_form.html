@@ -1,0 +1,28 @@
+{# templates/eventos/_evento_form.html #}
+<section>
+  <h2>Datos del evento</h2>
+  <div class="grid grid-2">
+    <div class="field">
+      <label for="{{ evento_form.nombre.id_for_label }}">Nombre del evento *</label>
+      {{ evento_form.nombre }}
+      {{ evento_form.nombre.errors }}
+      <p class="help">Máximo 100 caracteres.</p>
+    </div>
+
+    <div class="field">
+      <label for="{{ evento_form.fecha.id_for_label }}">Fecha *</label>
+      {{ evento_form.fecha }}
+      {{ evento_form.fecha.errors }}
+      <p class="help">Debe ser una fecha futura.</p>
+    </div>
+
+    <div class="field" style="grid-column: 1 / -1">
+      <label for="{{ evento_form.ubicacion.id_for_label }}">Ubicación (opcional)</label>
+      {{ evento_form.ubicacion }}
+      {{ evento_form.ubicacion.errors }}
+    </div>
+  </div>
+
+  {# errores no asociados a un campo #}
+  {{ evento_form.non_field_errors }}
+</section>

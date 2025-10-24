@@ -1,0 +1,49 @@
+# --- Python / Django ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+db.sqlite3
+*.sqlite3
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Archivos de configuración sensibles
+.env
+.env.*
+*.env
+
+# Archivos de migraciones compilados (opcional mantener todos)
+# **/migrations/__pycache__/
+
+# Archivos/DIRS generados por Django (si usas collectstatic o media)
+staticfiles/
+media/
+
+# --- Herramientas / Test ---
+.coverage
+htmlcov/
+.cache/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+ruff_cache/
+
+# --- Node / Frontend (por si se usa) ---
+node_modules/
+dist/
+build/
+
+# --- IDE / SO ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Otros ---
+*.log

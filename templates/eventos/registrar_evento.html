@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Registrar evento{% endblock %}
+
+{% block content %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {% include "eventos/_evento_form.html" with evento_form=evento_form %}
+
+    <section style="margin-top:1.25rem">
+      <h2>Participantes</h2>
+
+      {{ formset.management_form }}
+
+      <div id="participantes-list">
+        {% for pform in formset.forms %}
+          {% include "eventos/_participante_form.html" with pform=pform %}
+        {% endfor %}
+      </div>
+
+      <!-- plantilla invisible para clonar nuevos formularios -->
+      <template id="participante-empty">
+        {% include "eventos/_participante_form.html" with pform=formset.empty_form %}
+      </template>
+
+      <button type="button" class="btn" id="btn-add">+ Agregar participante</button>
+    </section>
+
+    <div style="margin-top:1.25rem">
+      <button type="submit" class="btn">Registrar evento</button>
+    </div>
+  </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function(){
+    const list = document.getElementById('participantes-list');
+    const tpl = document.getElementById('participante-empty');
+    const btn = document.getElementById('btn-add');
+
+    // input hidden del management form
+    const totalInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
+
+    function replaceIndex(html, idx) {
+      return html
+        .replace(/__prefix__/g, String(idx)) // Django usa __prefix__ en empty_form
+        .replace(/-(\d+)-/g, (m, n) => `-${n}-`); // no tocar índices existentes
+    }
+
+    btn.addEventListener('click', () => {
+      const idx = parseInt(totalInput.value, 10);
+      const html = replaceIndex(tpl.innerHTML, idx);
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html.trim();
+      list.appendChild(wrapper.firstElementChild);
+      totalInput.value = idx + 1;
+    });
+  })();
+</script>
+{% endblock %}
