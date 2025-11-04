@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Editar evento{% endblock %}
+
+{% block content %}
+  <h2>Editar evento</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {# Reutilizamos el mismo formulario del evento #}
+    {% include "eventos/_evento_form.html" with evento_form=form %}
+
+    <div style="margin-top:1.25rem">
+      <button type="submit" class="btn">Guardar cambios</button>
+      <a class="btn" href="{% url 'eventos:listar' %}">Volver</a>
+    </div>
+  </form>
+{% endblock %}

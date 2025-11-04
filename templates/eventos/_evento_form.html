@@ -21,8 +21,15 @@
       {{ evento_form.ubicacion }}
       {{ evento_form.ubicacion.errors }}
     </div>
+
+    <div class="field" style="grid-column: 1 / -1; display:flex; align-items:center; gap:.5rem">
+      {{ evento_form.es_privado }}
+      <label for="{{ evento_form.es_privado.id_for_label }}" style="margin:0">Evento privado</label>
+      {{ evento_form.es_privado.errors }}
+      <p class="help" style="margin-left:.5rem">Si está marcado, solo tú (propietario) lo verás en el listado.</p>
+    </div>
   </div>
 
-  {# errores no asociados a un campo #}
   {{ evento_form.non_field_errors }}
 </section>
+

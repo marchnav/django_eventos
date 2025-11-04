@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta{% endblock %}
+
+{% block content %}
+  <h2>Crear cuenta</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="field">
+      <label for="{{ form.username.id_for_label }}">Usuario</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.password1.id_for_label }}">Contraseña</label>
+      {{ form.password1 }}
+      {{ form.password1.errors }}
+    </div>
+
+    <div class="field">
+      <label for="{{ form.password2.id_for_label }}">Confirmar contraseña</label>
+      {{ form.password2 }}
+      {{ form.password2.errors }}
+    </div>
+
+    {{ form.non_field_errors }}
+
+    <button type="submit" class="btn">Registrarme</button>
+  </form>
+
+  <p class="help" style="margin-top:.75rem">
+    ¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a>
+  </p>
+{% endblock %}

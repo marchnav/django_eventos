@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Lista de eventos{% endblock %}
+
+{% block content %}
+  <h2>Eventos</h2>
+
+  <p class="help" style="margin:.25rem 0 1rem">
+    Se muestran eventos públicos y tus eventos privados.
+  </p>
+
+  {% if eventos %}
+    <div class="grid">
+      {% for e in eventos %}
+        <div style="border:1px solid #e5e7eb;border-radius:.6rem;padding:1rem">
+          <h3 style="margin:.2rem 0 0.4rem">{{ e.nombre }}</h3>
+          <p style="margin:.2rem 0"><strong>Fecha:</strong> {{ e.fecha }}</p>
+          {% if e.ubicacion %}
+            <p style="margin:.2rem 0"><strong>Ubicación:</strong> {{ e.ubicacion }}</p>
+          {% endif %}
+          <p style="margin:.2rem 0">
+            <strong>Privacidad:</strong>
+            {% if e.es_privado %}
+              <span style="padding:.15rem .45rem;border-radius:.4rem;background:#fee2e2;color:#991b1b">Privado</span>
+            {% else %}
+              <span style="padding:.15rem .45rem;border-radius:.4rem;background:#d1fae5;color:#065f46">Público</span>
+            {% endif %}
+          </p>
+          {% if e.propietario %}
+            <p class="help" style="margin:.2rem 0">Propietario: {{ e.propietario.username }}</p>
+          {% endif %}
+
+          {# Acciones según permisos/propiedad (sin paréntesis) #}
+          {% with groups_list=request.user.groups.all|join:',' %}
+            {% if perms.eventos.change_evento %}
+              {% if e.propietario_id == request.user.id or request.user.is_superuser or 'AdministradoresEventos' in groups_list %}
+                <div style="margin-top:.5rem">
+                  <a class="btn" href="{% url 'eventos:editar' e.id %}">Editar</a>
+                </div>
+              {% endif %}
+            {% endif %}
+
+            {% if perms.eventos.delete_evento %}
+              {% if request.user.is_superuser or 'AdministradoresEventos' in groups_list %}
+                <div style="margin-top:.5rem">
+                  <a class="btn" href="{% url 'eventos:eliminar' e.id %}">Eliminar</a>
+                </div>
+              {% endif %}
+            {% endif %}
+          {% endwith %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No hay eventos para mostrar.</p>
+  {% endif %}
+
+  <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+    <a class="btn" href="{% url 'eventos:registrar' %}">+ Registrar evento</a>
+  </div>
+{% endblock %}

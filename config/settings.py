@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -122,3 +123,32 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Auth redirects
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'eventos:listar'
+LOGOUT_REDIRECT_URL = 'login'
+
+
+# --- Seguridad para despliegue (solo en prod) ---
+DJANGO_ENV = os.getenv("DJANGO_ENV", "dev")  # "dev" o "prod"
+
+if DJANGO_ENV == "prod":
+    # Fuerza HTTPS
+    SECURE_SSL_REDIRECT = True
+
+    # Cookies solo por HTTPS
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # HSTS
+    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Buenas prácticas adicionales
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+
+    # Ajusta tu(s) dominio(s) real(es) si usas CSRF en prod
+    # CSRF_TRUSTED_ORIGINS = ["https://tu-dominio.com", "https://www.tu-dominio.com"]
