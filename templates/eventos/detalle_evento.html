@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Detalle de {{ evento.nombre }}{% endblock %}
+
+{% block content %}
+
+  <a href="{% url 'eventos:listar' %}" class="btn" style="margin-bottom:1rem;display:inline-block;">
+    ← Volver a la lista de eventos
+  </a>
+
+  <h2>{{ evento.nombre }}</h2>
+
+  <p><strong>Fecha:</strong> {{ evento.fecha }}</p>
+
+  {% if evento.ubicacion %}
+    <p><strong>Ubicación:</strong> {{ evento.ubicacion }}</p>
+  {% endif %}
+
+  <p>
+    <strong>Privado:</strong>
+    {{ evento.es_privado|yesno:"Sí,No" }}
+  </p>
+
+  {% if evento.propietario %}
+    <p><strong>Propietario:</strong> {{ evento.propietario.username }}</p>
+  {% endif %}
+
+  <hr style="margin:1.5rem 0;">
+
+  <h3>Participantes registrados</h3>
+
+  {% if participantes %}
+    <ul>
+      {% for p in participantes %}
+        <li>
+          {{ p.nombre }}
+          {% if p.email %}
+            — {{ p.email }}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No hay participantes registrados para este evento.</p>
+  {% endif %}
+
+  {% if request.user.is_authenticated %}
+    {% if request.user.is_superuser or evento.propietario_id == request.user.id %}
+      <div style="margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:.5rem;">
+        <a href="{% url 'eventos:editar' evento.pk %}" class="btn">Editar evento</a>
+        <a href="{% url 'eventos:eliminar' evento.pk %}" class="btn">Eliminar evento</a>
+      </div>
+    {% endif %}
+  {% endif %}
+
+{% endblock %}

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -14,6 +14,34 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from .models import Evento, Participante
 from .forms import EventoForm, ParticipanteForm
 
+
+# =========================
+# HOME: Eventos recientes
+# =========================
+
+def eventos_recientes(request):
+    """
+    Página principal: muestra los últimos eventos creados.
+    - Usuarios no autenticados: solo eventos públicos.
+    - Usuarios autenticados: eventos públicos + sus eventos privados.
+    """
+    qs = Evento.objects.all().order_by('-fecha', 'nombre')
+
+    if request.user.is_authenticated:
+        qs = qs.filter(
+            Q(es_privado=False) | Q(propietario=request.user)
+        )
+    else:
+        qs = qs.filter(es_privado=False)
+
+    eventos = qs[:5]  # últimos 5
+    return render(request, "eventos/eventos_recientes.html", {"eventos": eventos})
+
+
+# =========================
+# Registro de Evento + Participantes
+# =========================
+
 @login_required
 @permission_required('eventos.add_evento', raise_exception=True)
 def registrar_evento(request):
@@ -21,7 +49,7 @@ def registrar_evento(request):
         Evento,
         Participante,
         form=ParticipanteForm,
-        extra=2,           # cantidad de formularios vacíos inicialmente
+        extra=2,           # formularios vacíos iniciales
         can_delete=False,
         min_num=1,
         validate_min=True,
@@ -46,7 +74,6 @@ def registrar_evento(request):
                 return redirect("eventos:registrar")
         else:
             formset = ParticipanteFormSet(request.POST)
-
     else:
         evento_form = EventoForm()
         formset = ParticipanteFormSet()
@@ -58,12 +85,20 @@ def registrar_evento(request):
     return render(request, "eventos/registrar_evento.html", context)
 
 
+# =========================
+# Acceso denegado
+# =========================
+
 def acceso_denegado(request, exception=None):
     messages.error(request, "No tienes permisos para realizar esta acción.")
     if request.user.is_authenticated:
         return redirect('eventos:listar')
     return redirect('login')
 
+
+# =========================
+# Registro de Usuario
+# =========================
 
 def registrar_usuario(request):
     """
@@ -83,7 +118,7 @@ def registrar_usuario(request):
             messages.success(request, "✅ Cuenta creada. ¡Bienvenido!")
             auth_login(request, user)
 
-            # Redirigir a la lista (evita chocar con permisos de 'registrar')
+            # Redirigir a la lista de eventos
             return redirect("eventos:listar")
         else:
             messages.error(request, "Corrige los errores e intenta nuevamente.")
@@ -93,12 +128,16 @@ def registrar_usuario(request):
     return render(request, "registration/register.html", {"form": form})
 
 
+# =========================
+# Listar Eventos
+# =========================
+
 @login_required
 def listar_eventos(request):
     """
-    Muestra:
-    - Todos los eventos públicos (es_privado=False)
-    - + Los eventos privados cuyo propietario es el usuario actual
+    Lista de eventos visibles para el usuario autenticado:
+    - Eventos públicos
+    - + Eventos privados donde es propietario
     """
     qs = Evento.objects.filter(
         Q(es_privado=False) | Q(propietario=request.user)
@@ -107,7 +146,44 @@ def listar_eventos(request):
     return render(request, "eventos/listar_eventos.html", {"eventos": qs})
 
 
-# ---- Edición con Mixins (login + permisos + dueño) ----
+# =========================
+# Detalle de Evento + Participantes
+# =========================
+
+def detalle_evento(request, pk):
+    """
+    Muestra el detalle de un evento y sus participantes.
+    Si el evento es privado:
+    - Solo puede verlo el propietario,
+    - o un usuario del grupo 'AdministradoresEventos',
+    - o un superusuario.
+    """
+    evento = get_object_or_404(Evento, pk=pk)
+
+    if evento.es_privado:
+        u = request.user
+        es_admin = (
+            u.is_authenticated and
+            (u.is_superuser or u.groups.filter(name='AdministradoresEventos').exists())
+        )
+        es_dueno = (u.is_authenticated and evento.propietario_id == u.id)
+
+        if not (es_admin or es_dueno):
+            raise PermissionDenied("No tienes permisos para ver este evento privado.")
+
+    # Asumiendo related_name='participantes' en Participante.evento
+    participantes = evento.participantes.all().order_by('nombre')
+
+    context = {
+        "evento": evento,
+        "participantes": participantes,
+    }
+    return render(request, "eventos/detalle_evento.html", context)
+
+
+# =========================
+# Mixins de Autorización
+# =========================
 
 class SoloPropietarioOMods(UserPassesTestMixin):
     """
@@ -141,8 +217,6 @@ class EditarEventoView(LoginRequiredMixin, PermissionRequiredMixin, SoloPropieta
         return super().form_valid(form)
 
 
-# ---- Eliminación restringida a AdministradoresEventos / superuser ----
-
 class SoloAdmins(UserPassesTestMixin):
     """Permite acceso solo a superuser o grupo 'AdministradoresEventos'."""
     def test_func(self):
@@ -150,6 +224,7 @@ class SoloAdmins(UserPassesTestMixin):
         if not u.is_authenticated:
             return False
         return u.is_superuser or u.groups.filter(name='AdministradoresEventos').exists()
+
 
 class EliminarEventoView(LoginRequiredMixin, PermissionRequiredMixin, SoloAdmins, DeleteView):
     model = Evento
@@ -163,7 +238,9 @@ class EliminarEventoView(LoginRequiredMixin, PermissionRequiredMixin, SoloAdmins
         return super().delete(request, *args, **kwargs)
 
 
-# ---- Logout compatible con GET/POST ----
+# =========================
+# Logout
+# =========================
 
 def salir(request):
     """Cierra sesión y redirige al login (muestra mensaje)."""

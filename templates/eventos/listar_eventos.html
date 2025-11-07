@@ -1,60 +1,62 @@
 {% extends "base.html" %}
-{% block title %}Lista de eventos{% endblock %}
+{% block title %}Listado de eventos{% endblock %}
 
 {% block content %}
-  <h2>Eventos</h2>
-
-  <p class="help" style="margin:.25rem 0 1rem">
-    Se muestran eventos públicos y tus eventos privados.
-  </p>
+  <h2>Eventos registrados</h2>
+  <p>Aquí puedes ver todos los eventos a los que tienes acceso.</p>
 
   {% if eventos %}
-    <div class="grid">
-      {% for e in eventos %}
-        <div style="border:1px solid #e5e7eb;border-radius:.6rem;padding:1rem">
-          <h3 style="margin:.2rem 0 0.4rem">{{ e.nombre }}</h3>
-          <p style="margin:.2rem 0"><strong>Fecha:</strong> {{ e.fecha }}</p>
-          {% if e.ubicacion %}
-            <p style="margin:.2rem 0"><strong>Ubicación:</strong> {{ e.ubicacion }}</p>
-          {% endif %}
-          <p style="margin:.2rem 0">
-            <strong>Privacidad:</strong>
-            {% if e.es_privado %}
-              <span style="padding:.15rem .45rem;border-radius:.4rem;background:#fee2e2;color:#991b1b">Privado</span>
-            {% else %}
-              <span style="padding:.15rem .45rem;border-radius:.4rem;background:#d1fae5;color:#065f46">Público</span>
-            {% endif %}
-          </p>
-          {% if e.propietario %}
-            <p class="help" style="margin:.2rem 0">Propietario: {{ e.propietario.username }}</p>
-          {% endif %}
+    <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
+      <thead>
+        <tr>
+          <th style="border-bottom:1px solid #e5e7eb;text-align:left;padding:.5rem;">Nombre</th>
+          <th style="border-bottom:1px solid #e5e7eb;text-align:left;padding:.5rem;">Fecha</th>
+          <th style="border-bottom:1px solid #e5e7eb;text-align:left;padding:.5rem;">Ubicación</th>
+          <th style="border-bottom:1px solid #e5e7eb;text-align:left;padding:.5rem;">Privado</th>
+          <th style="border-bottom:1px solid #e5e7eb;text-align:left;padding:.5rem;">Participantes</th>
+          <th style="border-bottom:1px solid #e5e7eb;text-align:left;padding:.5rem;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in eventos %}
+          <tr>
+            <td style="padding:.5rem;">
+              <a href="{% url 'eventos:detalle' e.pk %}" style="text-decoration:none;color:#111827;">
+                {{ e.nombre }}
+              </a>
+            </td>
+            <td style="padding:.5rem;">{{ e.fecha }}</td>
+            <td style="padding:.5rem;">{{ e.ubicacion|default:"-" }}</td>
+            <td style="padding:.5rem;">
+              {{ e.es_privado|yesno:"Sí,No" }}
+            </td>
+            <td style="padding:.5rem;">
+              {{ e.participantes.count }}
+            </td>
+            <td style="padding:.5rem;white-space:nowrap;">
+              <a href="{% url 'eventos:detalle' e.pk %}">Ver detalle</a>
 
-          {# Acciones según permisos/propiedad (sin paréntesis) #}
-          {% with groups_list=request.user.groups.all|join:',' %}
-            {% if perms.eventos.change_evento %}
-              {% if e.propietario_id == request.user.id or request.user.is_superuser or 'AdministradoresEventos' in groups_list %}
-                <div style="margin-top:.5rem">
-                  <a class="btn" href="{% url 'eventos:editar' e.id %}">Editar</a>
-                </div>
+              {% if request.user.is_authenticated %}
+                {% if request.user.is_superuser or e.propietario_id == request.user.id %}
+                  | <a href="{% url 'eventos:editar' e.pk %}">Editar</a>
+                  | <a href="{% url 'eventos:eliminar' e.pk %}">Eliminar</a>
+                {% endif %}
               {% endif %}
-            {% endif %}
-
-            {% if perms.eventos.delete_evento %}
-              {% if request.user.is_superuser or 'AdministradoresEventos' in groups_list %}
-                <div style="margin-top:.5rem">
-                  <a class="btn" href="{% url 'eventos:eliminar' e.id %}">Eliminar</a>
-                </div>
-              {% endif %}
-            {% endif %}
-          {% endwith %}
-        </div>
-      {% endfor %}
-    </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   {% else %}
-    <p>No hay eventos para mostrar.</p>
+    <p>No hay eventos registrados.</p>
   {% endif %}
 
-  <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
-    <a class="btn" href="{% url 'eventos:registrar' %}">+ Registrar evento</a>
+  <div style="margin-top:1.5rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+    {% if request.user.is_authenticated %}
+      <a href="{% url 'eventos:registrar' %}" class="btn">+ Registrar nuevo evento</a>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn">Inicia sesión para crear eventos</a>
+    {% endif %}
+    <a href="{% url 'home' %}" class="btn">Volver al inicio</a>
   </div>
 {% endblock %}

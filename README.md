@@ -1,97 +1,164 @@
-# Plataforma de Registro de Eventos — Django 5
+--------------------------------------------------
+README - DJANGO EVENTOS
+Repositorio disponible del proyecto en : https://github.com/marchnav/django_eventos
+Desarrollado por: Marcelo Navarrete
+--------------------------------------------------
 
-App de ejemplo para **registrar eventos y participantes** con **Django 5**, usando:
-- `FormClass` + **validaciones** y **inline formset** (participantes)
-- **Autenticación y autorización** con el modelo **Auth** (roles y permisos)
-- **Mixins** de acceso (`LoginRequiredMixin`, `PermissionRequiredMixin`) y reglas de **propiedad**
-- Plantillas reutilizables y **mensajes** de feedback
+1. Descripción del proyecto
 
-## Requisitos
-- Python 3.10+ (probado con 3.13)
-- pip
-- Git (opcional)
+Este proyecto es una aplicación web desarrollada con Django para la gestión de eventos y sus participantes, con énfasis en el uso de autenticación, permisos, grupos y propiedad de objetos.
 
-## Instalación rápida
+Permite:
+- Registrar eventos con información clave.
+- Asociar participantes a cada evento mediante un formset.
+- Controlar qué eventos ve cada usuario según su autenticación y rol.
+- Visualizar detalle completo de eventos y participantes.
+- Administrar eventos respetando reglas de seguridad y permisos.
 
+--------------------------------------------------
+2. Tecnologías utilizadas
 
-git clone https://github.com/marchnav/django_eventos
-cd <REPO>
+- Python 3.x
+- Django 5.x
+- SQLite como base de datos por defecto
+- HTML + CSS (templates de Django)
 
-python -m venv .venv
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
+--------------------------------------------------
+3. Modelos principales
 
+A) Evento
+- nombre: nombre del evento.
+- fecha: fecha del evento.
+- ubicacion: lugar (opcional).
+- es_privado: indica si el evento es privado.
+- propietario: usuario que crea y administra el evento.
+
+B) Participante
+- evento: relación con Evento.
+- nombre: nombre del participante.
+- email: correo opcional.
+
+Relación:
+- Un Evento tiene múltiples Participantes.
+- Cada Participante pertenece a un solo Evento.
+
+--------------------------------------------------
+4. Funcionalidades clave
+
+- Página de inicio:
+  - Muestra eventos recientes visibles según el usuario.
+- Registro de usuarios:
+  - Creación de cuentas con `UserCreationForm`.
+- Autenticación:
+  - Login y logout.
+- Registro de eventos:
+  - Formulario protegido con permisos.
+  - Uso de formset para registrar participantes asociados.
+- Listado de eventos:
+  - Vista para mostrar eventos accesibles al usuario (públicos + propios).
+- Detalle de evento:
+  - Vista dedicada a un evento específico.
+  - Muestra participantes vinculados.
+- Edición y eliminación:
+  - Restringida a usuarios con permisos y/o propietarios del evento.
+- Manejo de acceso denegado:
+  - Vista personalizada para redirigir o informar cuando no hay permisos.
+
+--------------------------------------------------
+5. Estructura básica del proyecto (resumen)
+
+- config/
+  - settings.py
+  - urls.py
+  - wsgi.py
+- eventos/
+  - models.py
+  - views.py
+  - forms.py
+  - urls.py
+  - templates/eventos/
+    - eventos_recientes.html
+    - listar_eventos.html
+    - registrar_evento.html
+    - detalle_evento.html
+    - editar_evento.html
+    - confirmar_eliminacion.html
+- templates/registration/
+  - login.html
+  - register.html
+- base.html
+  - Plantilla base para el resto de las vistas.
+
+--------------------------------------------------
+6. Instalación y ejecución
+
+1) Clonar el repositorio
+Descargar o clonar el proyecto en el equipo local.
+
+2) Crear entorno virtual (recomendado)
+python -m venv venv
+venv\Scripts\activate   (Windows)
+
+3) Instalar dependencias
 pip install -r requirements.txt
+(En su defecto, instalar al menos Django.)
+
+4) Aplicar migraciones
 python manage.py migrate
+
+5) Crear superusuario (opcional)
+python manage.py createsuperuser
+
+6) Ejecutar el servidor
 python manage.py runserver
 
-Abrir: http://127.0.0.1:8000/
+Acceder en el navegador a:
+http://localhost:8000/
 
-## Grupos y roles
+--------------------------------------------------
+7. Uso de la aplicación
 
-Crea tres grupos en /admin → Grupos:
+- /register/:
+  Registrar un nuevo usuario.
 
-AdministradoresEventos
-Permisos: add/change/delete/view de evento y participante (pueden todo).
+- /login/:
+  Iniciar sesión.
 
-Organizadores
-Permisos: al menos add/change/view sobre evento y participante.
-Regla de negocio: solo pueden editar sus propios eventos (propietario).
+- /:
+  Ver eventos recientes.
 
-Asistentes
-Sin permisos de edición; pueden listar eventos públicos y sus privados.
+- /eventos/:
+  Ver listado de eventos registrados accesibles para el usuario actual.
 
-El registro vía /register agrega automáticamente al usuario al grupo Asistentes.
+- /eventos/registrar/:
+  Registrar un nuevo evento (requiere permisos).
 
-## Rutas principales
-/login (Django Auth)
+- /eventos/<id>/:
+  Ver el detalle de un evento y sus participantes.
 
-/logout (vista propia salir, permite GET/POST)
+- /eventos/<id>/editar/:
+  Editar evento (solo propietario o usuario con permisos).
 
-/register (registro con UserCreationForm, agrega a Asistentes)
+- /eventos/<id>/eliminar/:
+  Eliminar evento (solo usuario autorizado).
 
-/eventos/registrar/ (crear evento + inline formset; requiere add_evento)
+--------------------------------------------------
+8. Permisos y seguridad
 
-/eventos/listar/ (lista públicos + privados del propietario)
+- Uso de @login_required y @permission_required para proteger vistas sensibles.
+- Uso de mixins (LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin) en vistas basadas en clases.
+- Validación de propiedad del evento para edición/eliminación.
+- Restricción en la visualización de eventos privados:
+  - Solo propietario o superusuario puede ver el detalle.
 
-/eventos/<id>/editar/ (solo propietario / admin / grupo AdministradoresEventos)
+--------------------------------------------------
+9. Notas finales
 
-/eventos/<id>/eliminar/ (solo AdministradoresEventos / superuser)
-
-## Redirecciones
-
-LOGIN_REDIRECT_URL = eventos:listar
-
-LOGOUT_REDIRECT_URL = login
-
-## Validaciones de negocio
-
-Evento
-
-nombre: CharField(max_length=100)
-
-fecha: futura (validación en EventoForm)
-
-ubicacion: opcional
-
-es_privado: público/privado
-
-propietario: se asigna con request.user al crear
-
-Participante
-
-nombre: obligatorio
-
-email: EmailField obligatorio
-Los errores se muestran debajo de cada campo.
-
-## Flujo esperado por rol
-
-| Acción               | Asistentes | Organizadores             | AdministradoresEventos / superuser |
-| -------------------- | ---------- | ------------------------- | ---------------------------------- |
-| Listar eventos       | ✅          | ✅                         | ✅                                  |
-| Registrar evento     | ❌          | ✅ (crea como propietario) | ✅                                  |
-| Editar evento propio | N/A        | ✅                         | ✅                                  |
-| Editar evento ajeno  | ❌          | ❌                         | ✅                                  |
-| Eliminar evento      | ❌          | ❌                         | ✅                                  |
-
+Este proyecto no solo cumple con los requisitos funcionales del ejercicio, sino que además incorpora:
+- Separación clara de responsabilidades entre vistas, modelos y templates.
+- Buenas prácticas en manejo de permisos y visibilidad.
+- Ajustes específicos realizados en respuesta a la retroalimentación del docente, garantizando que:
+  - Los eventos sean visibles en el home.
+  - Los eventos registrados sean accesibles.
+  - Cada evento tenga vista de detalle.
+  - Los participantes de cada evento se muestren claramente donde corresponde.
